@@ -28,7 +28,7 @@ router.get('/new', (req, res) => {
 
 /* POST create article. */
 router.post('/', asyncHandler(async (req, res) => {
-  let article
+  let article;
   try{
     //const article = await Article.create(req.body);
     article = await Article.create(req.body);
@@ -37,21 +37,10 @@ router.post('/', asyncHandler(async (req, res) => {
   } catch (error){
     if(error.name === "SequelizeValidationError"){ //check the error
       article = await Article.build(req.body);
-      res.render("article/new", { article, errors: error.errors, title: "New Article" })
+      res.render("articles/new", { article, errors: error.errors, title: "New Article" })
     } else {
       throw error; //error caught in the asyncHandlers catch block
     }
-  }
-}));
-
-/* Edit article form. */
-router.get("/:id/edit", asyncHandler(async(req, res) => {
-  const article = await Article.findByPk(req.params.id);
-  //res.render("articles/edit", { article: {}, title: "Edit Article" });
-  if(article){
-    res.render("articles/edit", { article: article, title: "Edit Article" });
-  } else {
-    res.sendStatus(404);
   }
 }));
 
@@ -67,15 +56,39 @@ router.get("/:id", asyncHandler(async (req, res) => {
   }
 }));
 
-/* Update an article. */
-router.post('/:id/edit', asyncHandler(async (req, res) => {
+/* Edit article form. */
+router.get("/:id/edit", asyncHandler(async(req, res) => {
   const article = await Article.findByPk(req.params.id);
   if(article){
     await article.update(req.body);
-    //res.redirect("/articles/");
-    res.redirect("/articles/" + article.id);
-  }else{
+    res.render("articles/edit", { article: article, title: "Edit Article" });
+    //res.redirect("/articles/" + article.id);
+  } else {
     res.sendStatus(404);
+  }
+}));
+
+/* Update an article. */
+router.post('/:id/edit', asyncHandler(async (req, res) => {
+  let article;
+  try{
+    //const article = await Article.findByPk(req.params.id);
+    article = await Article.findByPk(req.params.id);
+    if(article){
+      await article.update(req.body);
+      //res.redirect("/articles/");
+      res.redirect("/articles/" + article.id);
+    }else{
+      res.sendStatus(404);
+    }
+  } catch(error){
+    if(error.name === "SequelizeValidationError"){ 
+      article = await Article.build(req.body);
+      article.id = req.params.id; //make sure correct article gets updated
+      res.render("articles/edit", { article, errors: error.errors, title: "Edit Article" })
+    }else{
+      throw error;
+    }
   }
 }));
 
